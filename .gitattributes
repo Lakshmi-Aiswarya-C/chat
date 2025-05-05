@@ -1,0 +1,2 @@
+chatbot/vectorstore/db_faiss/index.faiss filter=lfs diff=lfs merge=lfs -text
+chatbot/vectorstore/db_faiss/index.pkl filter=lfs diff=lfs merge=lfs -text
