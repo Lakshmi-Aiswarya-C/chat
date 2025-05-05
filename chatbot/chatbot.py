@@ -298,7 +298,7 @@ lab_report_url = "https://fxvmph62r948bafhhj8meh.streamlit.app/"
 diet_info_url = "https://8z3sw876xnebjntbj26r8b.streamlit.app/"
 
 # Path to FAISS database
-DB_FAISS_PATH = "vectorstore/db_faiss"
+DB_FAISS_PATH = "chatbot/vectorstore/db_faiss"
 
 @st.cache_resource
 def get_vectorstore():
