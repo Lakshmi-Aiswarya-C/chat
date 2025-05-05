@@ -12,7 +12,7 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 # Path to FAISS database
-DB_FAISS_PATH = "vectorstore/db_faiss"
+DB_FAISS_PATH = "chatbot/vectorstore/db_faiss"
 
 @st.cache_resource
 def get_vectorstore():
