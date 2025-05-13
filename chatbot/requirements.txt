@@ -6,3 +6,4 @@ langchain-community
 langchain-huggingface
 text-generation
 python-dotenv
+torch==2.1.2
