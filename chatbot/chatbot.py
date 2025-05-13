@@ -279,7 +279,6 @@ if __name__ == "__main__":
 
 
 
-
 import os
 os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 import streamlit as st
@@ -288,7 +287,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
-from langchain_huggingface import HuggingFaceEndpoint
+from langchain_huggingface import ChatHuggingFace
 from dotenv import load_dotenv, find_dotenv
 
 # Load environment variables from .env file
@@ -343,9 +342,9 @@ def set_custom_prompt(conversation_history, question):
     return prompt
 
 def load_llm(huggingface_repo_id, HF_TOKEN):
-    llm = HuggingFaceEndpoint(
+    # ✅ Using ChatHuggingFace instead of HuggingFaceEndpoint
+    llm = ChatHuggingFace(
         repo_id=huggingface_repo_id,
-        
         temperature=0.5,
         max_new_tokens=512,
         huggingfacehub_api_token=HF_TOKEN
@@ -387,7 +386,7 @@ def main():
             st.session_state.messages.append({'role': 'assistant', 'content': lab_response})
             return
         elif intent == "diet":
-            diet_response = f"Do you Want to know more about diet...Click on this and Explore. [Diet Recommendation]({diet_info_url}) for detailed information. 🍴"
+            diet_response = f"Do you want to know more about diet? Click and explore our [Diet Recommendation]({diet_info_url}) for detailed information. 🍴"
             st.chat_message('assistant').markdown(diet_response)
             st.session_state.messages.append({'role': 'assistant', 'content': diet_response})
             return
