@@ -398,9 +398,24 @@ def main():
 
                 response = qa_chain.invoke({'query': prompt})
                 result = response["result"]
-
+                sources = response.get("source_documents", [])
+                
+                # Show the main answer
                 st.chat_message('assistant').markdown(result)
                 st.session_state.messages.append({'role': 'assistant', 'content': result})
+                
+                # Show citations if available
+                if sources:
+                    with st.expander("📚 Sources / Citations"):
+                        for i, doc in enumerate(sources):
+                            source_text = doc.page_content.strip()
+                            metadata = doc.metadata
+                            st.markdown(f"**Source {i+1}:**")
+                            st.markdown(f"> {source_text}")
+                            if metadata:
+                                for key, value in metadata.items():
+                                    st.markdown(f"- *{key}*: {value}")
+
 
         except Exception as e:
             st.error(f"❌ Error: {str(e)}")
