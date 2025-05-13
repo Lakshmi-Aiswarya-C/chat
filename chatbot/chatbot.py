@@ -281,53 +281,49 @@ if __name__ == "__main__":
 
 import os
 os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
-import streamlit as st
 
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.chains import RetrievalQA
-from langchain_community.vectorstores import FAISS
-from langchain.prompts import PromptTemplate
-from langchain_huggingface import ChatHuggingFace
+import streamlit as st
 from dotenv import load_dotenv, find_dotenv
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint
 
 # Load environment variables from .env file
 load_dotenv(find_dotenv())
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-# URLs for deployed tools
+# 🔗 Hugging Face model to use
+HUGGINGFACE_REPO_ID = "HuggingFaceH4/zephyr-7b-beta"  # Or another compatible model
+
+# Tool URLs
 tablet_info_url = "https://5df9nqf5y2dqv2w7ev6xza.streamlit.app/"
 lab_report_url = "https://fxvmph62r948bafhhj8meh.streamlit.app/"
 diet_info_url = "https://8z3sw876xnebjntbj26r8b.streamlit.app/"
 
-# Path to FAISS database
+# Path to FAISS vector DB
 DB_FAISS_PATH = "chatbot/vectorstore/db_faiss"
 
 @st.cache_resource
 def get_vectorstore():
     embedding_model = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
-    db = FAISS.load_local(DB_FAISS_PATH, embedding_model, allow_dangerous_deserialization=True)
-    return db
+    return FAISS.load_local(DB_FAISS_PATH, embedding_model, allow_dangerous_deserialization=True)
 
 def detect_tool_intent(prompt):
-    lower_prompt = prompt.lower()
-
-    tablet_keywords = ["tablet"]
-    lab_keywords = ["report", "test", "lab", "cbc", "blood", "x-ray", "scan", "result", "ecg", "mri", "radiology", "urine", "thyroid"]
-    diet_keywords = ["diet"]
-
-    if any(word in lower_prompt for word in tablet_keywords):
+    prompt = prompt.lower()
+    if any(x in prompt for x in ["tablet"]):
         return "tablet"
-    elif any(word in lower_prompt for word in lab_keywords):
+    elif any(x in prompt for x in ["report", "test", "lab", "cbc", "blood", "x-ray", "scan", "result", "ecg", "mri", "radiology", "urine", "thyroid"]):
         return "lab"
-    elif any(word in lower_prompt for word in diet_keywords):
+    elif "diet" in prompt:
         return "diet"
-
     return None
 
 def set_custom_prompt(conversation_history, question):
     context = "\n".join(conversation_history[-5:])
     CUSTOM_PROMPT_TEMPLATE = """
     Use the following context to answer the question as accurately as possible.
-    Be concise but complete. If the answer is not in the context, respond with "I don't know". 
+    Be concise but complete. If the answer is not in the context, respond with "I don't know".
     Don't make up information. Only use what is relevant from the context.
 
     Context: {context}
@@ -335,21 +331,18 @@ def set_custom_prompt(conversation_history, question):
 
     Answer:
     """
-    prompt = PromptTemplate(
+    return PromptTemplate(
         input_variables=["context", "question"],
         template=CUSTOM_PROMPT_TEMPLATE
     )
-    return prompt
 
 def load_llm(huggingface_repo_id, HF_TOKEN):
-    # ✅ Using ChatHuggingFace instead of HuggingFaceEndpoint
-    llm = ChatHuggingFace(
+    return HuggingFaceEndpoint(
         repo_id=huggingface_repo_id,
         temperature=0.5,
         max_new_tokens=512,
         huggingfacehub_api_token=HF_TOKEN
     )
-    return llm
 
 def main():
     st.title("🩺 Curabot")
@@ -366,48 +359,38 @@ def main():
         st.chat_message('user').markdown(prompt)
         st.session_state.messages.append({'role': 'user', 'content': prompt})
 
-        # 🔸 Check for casual responses like "ok", "thanks", etc.
+        # Casual response shortcut
         casual_responses = ["ok", "okay", "okkk", "cool", "thanks", "thank you", "great", "got it", "hmm", "alright"]
         if prompt.lower().strip() in casual_responses:
             st.chat_message('assistant').markdown("👍")
             st.session_state.messages.append({'role': 'assistant', 'content': "👍"})
             return
 
-        # 🔸 Check if intent matches tablet or lab-related queries
+        # Tool intent routing
         intent = detect_tool_intent(prompt)
         if intent == "tablet":
-            tablet_response = f"It looks like you're asking about a medication. Please visit our [Tablet Info Summarizer]({tablet_info_url}) for detailed insights. 💊"
-            st.chat_message('assistant').markdown(tablet_response)
-            st.session_state.messages.append({'role': 'assistant', 'content': tablet_response})
-            return
+            response = f"It looks like you're asking about a medication. Please visit our [Tablet Info Summarizer]({tablet_info_url}) 💊"
         elif intent == "lab":
-            lab_response = f"You can upload your report to our [Lab Report Analyzer]({lab_report_url}) for detailed interpretation. 📊"
-            st.chat_message('assistant').markdown(lab_response)
-            st.session_state.messages.append({'role': 'assistant', 'content': lab_response})
-            return
+            response = f"You can upload your report to our [Lab Report Analyzer]({lab_report_url}) 📊"
         elif intent == "diet":
-            diet_response = f"Do you want to know more about diet? Click and explore our [Diet Recommendation]({diet_info_url}) for detailed information. 🍴"
-            st.chat_message('assistant').markdown(diet_response)
-            st.session_state.messages.append({'role': 'assistant', 'content': diet_response})
+            response = f"Want to know more about diet? Visit our [Diet Recommendation]({diet_info_url}) 🍴"
+        else:
+            response = None
+
+        if response:
+            st.chat_message('assistant').markdown(response)
+            st.session_state.messages.append({'role': 'assistant', 'content': response})
             return
 
-        # 🔸 Vectorstore + LLM Flow
-        HUGGINGFACE_REPO_ID = "HuggingFaceH4/zephyr-7b-beta"
-
-        HF_TOKEN = os.environ.get("HF_TOKEN")
-
+        # Vectorstore + LLM response
         try:
             with st.spinner("Thinking... 🤖"):
                 vectorstore = get_vectorstore()
-                if vectorstore is None:
-                    st.error("Failed to load the vector store")
-                    return
-
-                conversation_history = [message['content'] for message in st.session_state.messages]
+                conversation_history = [m['content'] for m in st.session_state.messages]
                 prompt_template = set_custom_prompt(conversation_history, prompt)
 
                 qa_chain = RetrievalQA.from_chain_type(
-                    llm=load_llm(huggingface_repo_id=HUGGINGFACE_REPO_ID, HF_TOKEN=HF_TOKEN),
+                    llm=load_llm(HUGGINGFACE_REPO_ID, HF_TOKEN),
                     chain_type="stuff",
                     retriever=vectorstore.as_retriever(search_kwargs={'k': 3}),
                     return_source_documents=True,
@@ -416,7 +399,6 @@ def main():
 
                 response = qa_chain.invoke({'query': prompt})
                 result = response["result"]
-                print("🔍 RAW RESPONSE:", result)
 
                 st.chat_message('assistant').markdown(result)
                 st.session_state.messages.append({'role': 'assistant', 'content': result})
