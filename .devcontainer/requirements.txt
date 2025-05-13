@@ -1,8 +1,0 @@
-streamlit
-faiss-cpu
-pypdf
-langchain
-langchain-community
-langchain-huggingface
-text-generation
-python-dotenv
