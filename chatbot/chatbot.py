@@ -343,7 +343,7 @@ def set_custom_prompt(conversation_history, question):
 def load_llm(huggingface_repo_id, HF_TOKEN):
     llm = HuggingFaceEndpoint(
         repo_id=huggingface_repo_id,
-        task="text-generation",
+        task="conversational",
         temperature=0.5,
         max_new_tokens=512,
         huggingfacehub_api_token=HF_TOKEN
