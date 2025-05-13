@@ -392,7 +392,8 @@ def main():
             return
 
         # 🔸 Vectorstore + LLM Flow
-        HUGGINGFACE_REPO_ID = "mistralai/Mistral-7B-Instruct-v0.3"
+        HUGGINGFACE_REPO_ID = "HuggingFaceH4/zephyr-7b-beta"
+
         HF_TOKEN = os.environ.get("HF_TOKEN")
 
         try:
