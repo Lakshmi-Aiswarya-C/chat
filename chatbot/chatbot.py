@@ -281,8 +281,10 @@ if __name__ == "__main__":
 
 
 import os
+os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 import streamlit as st
-from langchain.embeddings import HuggingFaceEmbeddings
+
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
