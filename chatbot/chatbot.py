@@ -284,7 +284,7 @@ import os
 os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 import streamlit as st
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
